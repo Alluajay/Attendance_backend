@@ -54,6 +54,7 @@ if($conn){
 			$response["message"] = "Error in fetching data";
 		}
 		break;
+	
 	case 'get_students':
 			$dept = $postdata->dept;
 			$year = $postdata->year;
@@ -159,20 +160,66 @@ if($conn){
 					$response["message"] = "error in creating new row";
 				}
 			}
+			if($atten == 0){
+				$to = "alludajay@gmail.com";
+				$subject = "Attendance System";
+
+				$message = "<b>Student with roll no $rno is absent on period:$period date:$date </b><br>";
+
+				$header = "From:p.saranya.abi@gmail.com \r\n";
+				$header .= "MIME-Version: 1.0\r\n";
+				$header .= "Content-type: text/html\r\n";
+
+				$retval = mail($to,$subject,$message,$header);
+				if($retval){
+					$response["message"] = "absent mail sent";
+				}
+			}
 			$sql2 = "UPDATE $db_name.$table_atten SET `$period` = '$atten' WHERE $table_atten.rno = $rno AND $table_atten.date_ = '$date'";
 			$result2 = mysqli_query($conn,$sql2);
 			if($result2){
 				$response["status"] = "success";
-				$response["message"] = "attendance updated successfully";
+				$response["message"].= "attendance updated successfully";
 			}else{
 				$response["error"] = "error";
-				$response["message"] = "error in updating data2";
+				$response["message"].= "error in updating data2";
 			}
-
 		}else{
 			$response["error"] = "error";
 			$response["message"] = "error in updating data1";
 		}
+		break;
+	case 'get_net':
+		$rno = $postdata->rno;
+		$sql = "SELECT * FROM $db_name.$table_atten WHERE $table_atten.rno = $rno";
+		$result = mysqli_query($conn,$sql);
+		if($result){
+			$count = mysqli_num_rows($result);
+			if($count>0){
+				$atten = 0;
+				while ($row = mysqli_fetch_assoc($result)) {
+					$att_count = 0;
+					for ($i=1; $i < 8; $i++) { 
+						if($row["$i"] == 1){
+							$att_count++;
+						}	
+					}					
+					$att_count = $att_count/7;
+					$atten = $atten + $att_count;
+				}
+				$percent = $atten/$count;
+				$response["status"] = "success";
+				$response["message"] = "percentage fetched successfully";
+				$response["percent"] = $percent;
+			}else{
+				$response["error"] = "error";
+				$response["message"] = "error no data found";
+			}
+		}else{
+			$response["error"] = "error";
+			$response["message"] = "error in fetching data";
+		}
+		
 		break;
 
 	case 'get_atten':
